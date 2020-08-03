@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHA-256 Checksum</title>
+</head>
+
+<body id="$body">
+    <header>
+        <a href="#">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+            </svg> SHA-256 Checksum</a></header>
+    <main>
+        <h4>Compute a file's SHA-256 checksum</h4>
+        <p>
+        </p>
+        <label>
+            <h3>Select a file</h3>
+            <input id="$fileInput" type="file" required autofocus>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                <path d="M0 0h24v24H0z" fill="none" />
+                <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
+            </svg>
+        </label>
+        <div class="output">
+            <h2 id="$fileName" class="filename"></h2>
+            <h2 id="$checksum" class="checksum"></h2>
+        </div>
+    </main>
+    <script>
+    function displayHash(hash, file) {
+        $fileName.textContent = file.name
+        $checksum.textContent = hash
+    }
+
+
+    /**
+     *
+     * Converts a buffer into a hex string.
+     *
+     * @param {Uint8Array|ArrayBuffer} buffer The buffer
+     * @return {String} The hex string
+     *
+     */
+    function toHex(buffer) {
+        if (buffer instanceof ArrayBuffer) {
+            buffer = new Uint8Array(buffer);
+        }
+        return Array.prototype.map.call(buffer, byteToHex).join('');
+    }
+
+    /**
+     *
+     * Converts one byte into a string with two hex nibbles.
+     *
+     * @param {number} byte - The byte.
+     * @return {string} The hex string
+     *
+     */
+    function byteToHex(byte) {
+        // convert to hex string and pad a zero if necessary
+        return ('0' + (byte & 0xFF).toString(16)).slice(-2);
+    }
+
+    function sha256(buffer) {
+        return window.crypto.subtle.digest({ name: 'SHA-256' }, buffer)
+    }
+
+    async function readFile(file) {
+        const blob = file.slice(0)
+        const arrayBuffer = await blob.arrayBuffer()
+        return arrayBuffer
+    }
+
+    async function hashFile(file) {
+        const arrayBuffer = await readFile(file)
+        const hash = await sha256(arrayBuffer)
+        const hashHex = toHex(hash)
+        return hashHex
+    }
+
+    async function onFileSelected(files) {
+        const file = files[0]
+        const hash = await hashFile(file)
+        displayHash(hash, file)
+        $fileInput.value = null // reset input
+    }
+
+    function onDrop(e) {
+        console.log(e)
+        e.preventDefault()
+        const files = e.dataTransfer.files
+        onFileSelected(files)
+    }
+
+    $fileInput.addEventListener('input', e => onFileSelected($fileInput.files))
+    $body.addEventListener('drop', e => onDrop(e))
+    $body.addEventListener('dragover', e => e.preventDefault())
+    </script>
+    <style type="text/css">
+    :root{
+        --accent-color:#3F51B5;
+    }
+    * {
+        box-sizing: border-box;
+        margin: 0;
+    }
+
+
+    h3 {
+        font-size: 34px;
+        font-weight: 400;
+        letter-spacing: -.01em;
+        line-height: 40px;
+        margin: 40px 0 16px;
+        color: rgba(0, 0, 0, 0.54);
+    }
+
+    h4 {
+        font-size: 20px;
+        font-weight: 400;
+        line-height: 28px;
+        opacity: 0.87;
+    }
+
+    body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-family: sans-serif;
+        height: 100vh;
+    }
+
+    header {
+        width: 100%;
+        min-height: 56px;
+        background: var(--accent-color);
+        color: white;
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+        font-size: 20px;
+        font-weight: 300;
+    }
+
+    header a {
+        text-decoration: none;
+        color: currentColor;
+        display: flex;
+        align-items: center;
+    }
+
+    header a svg {
+        margin-right: 8px;
+        fill: currentColor;
+    }
+
+    main {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        max-width: 640px;
+        width: 100%;
+        padding: 0 8px 0 8px;
+    }
+
+
+    input[type="file"] {
+        position: absolute;
+        top: -99999px;
+    }
+
+    label {
+        margin-top: 32px;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        padding: 0 64px 24px;
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 20px;
+        cursor: pointer;
+        text-align: center;
+        width: 100%;
+    }
+
+    label svg {
+        width: 160px;
+        height: 160px;
+        fill: var(--accent-color);
+        opacity: 0.9;
+        transition: transform 0.2s ease-in;
+        will-change: transform;
+    }
+
+    label:hover svg {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+
+
+    main {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        justify-content: center;
+        padding-bottom: 128px;
+    }
+
+
+    h2 {
+        word-break: break-word;
+        display: flex;
+        flex-direction: column;
+        margin: 16px 0;
+    }
+
+    .output {
+        height: 160px;
+    }
+
+    .checksum:not(:empty):before,
+    .filename:not(:empty):before {
+        content: 'SHA-256 Checksum';
+        font-size: 16px;
+        opacity: 0.7;
+        word-break: break-all;
+        color: var(--accent-color);
+    }
+
+    .filename:not(:empty):before {
+        content: 'File Name';
+        margin-top: 64px;
+    }
+    </style>
+</body>
+
+</html>
