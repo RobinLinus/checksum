@@ -96,7 +96,7 @@
         onFileSelected(files)
     }
 
-    $fileInput.addEventListener('input', e => onFileSelected($fileInput.files))
+    $fileInput.addEventListener('change', e => onFileSelected($fileInput.files))
     $body.addEventListener('drop', e => onDrop(e))
     $body.addEventListener('dragover', e => e.preventDefault())
     </script>
